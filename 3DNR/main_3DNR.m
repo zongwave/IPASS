@@ -1,4 +1,4 @@
-function multi_frame_image_denoise_filter()
+function main_3DNR()
 
 clear;
 clc;
@@ -82,7 +82,7 @@ for image_y_start = 1 : ref_block_height : image_height - ref_block_height + 1
                 block_y_start{ref_x_block + ref_y_block * ref_block_x_count} = image_y_start + ref_block_height * ref_block_y_index{ref_x_block + ref_y_block * ref_block_x_count};
             end
         end
-        
+
         for block_index = 1 :  ref_block_x_count * ref_block_y_count
             if (block_x_start{block_index} < 1)
                 block_x_start{block_index} = 1;
