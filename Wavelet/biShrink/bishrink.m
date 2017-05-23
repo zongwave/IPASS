@@ -10,6 +10,7 @@ function [w1] = bishrink(y1,y2,T)
 %      w1 - the denoised coefficient
 
 R  = sqrt(abs(y1).^2 + abs(y2).^2);
+%R  = abs(y1);
 R = R - T;
 R  = R .* (R > 0);
 w1 = y1 .* R./(R+T); 

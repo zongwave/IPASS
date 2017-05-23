@@ -8,11 +8,11 @@ function y = denoising_dwt(x)
 %        y - the corresponding denoised image
 
 % Adjust windowsize and the corresponding filter
-windowsize  = 7;
+windowsize  = 2;
 windowfilt = ones(1,windowsize)/windowsize;
 
 % Number of Stages
-L = 6;
+L = 2;
 
 % symmetric extension
 N = length(x);
@@ -46,7 +46,8 @@ for scale = 1:L-1
         
         % Threshold value estimation 
         T = sqrt(3)*Nsig^2./Ssig;
-        
+        fprintf('scale:%2d., dir:%2d., noise ESTIMATE:%.2f \n', scale, dir, Nsig);
+
         % Bivariate Shrinkage
         W{scale}{dir} = bishrink(Y_coefficient,Y_parent,T);
         
