@@ -23,11 +23,11 @@ if (nargin < 1)
     {'*.log','LOG files (*.log)'; ...
        '*.data','DATA files (*.bmp)'; ...
        '*.*',  'All Files (*.*)'}, ...
-       'Pick a file');
+       'Pick keypoints file');
 
    fid = fopen(fullfile(pathname, filename));
 else
-   fid = fopen('calib.log');
+   fid = fopen('keypoints.log');
 end;
 
 frewind(fid);

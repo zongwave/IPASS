@@ -99,65 +99,64 @@ hold on
 title('Gyro Orientation');
 legend('Orientation X', 'Orientation Y', 'Orientation Z', 'Orientation W');
 
-eulerAngle = zeros(3, ts_count(1));
-rotAxis = zeros(4, ts_count(1));
-rotMatrix = zeros(3, 3, ts_count(1));
-
-
-%% Quaternion to Matrix
-convertType = int32(0);
-
-convertRotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
-points = ones(ts_count(1), 3);
-for i=1:size(rotMatrix, 3)
-    points(i, :) = rotMatrix(:, :, i) * points(i, :)';
-end
-
-figure();
-plot3(points(:, 1), points(:, 2),  points(:, 3), 'r', 'LineWidth', 2);
-hold on
-title('Transform Points');
-xlabel('X', 'Fontsize', 15);
-ylabel('Y', 'Fontsize', 15);
-zlabel('Z', 'Fontsize', 15);
-
-%% Quaternion to Euler angle
-convertType = int32(1);
-
-convertRotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
-eulerAngle = (eulerAngle * 180 / 3.1415926);
-figure();
-plot(eulerAngle(1, :), 'r', 'LineWidth', 2);
-hold on
-plot(eulerAngle(2, :), 'g', 'LineWidth', 2);
-hold on
-plot(eulerAngle(3, :), 'b', 'LineWidth', 2);
-hold on
-title('Euler Angles');
-legend('Euler Angle X(roll)', 'Euler Angle Y(pitch)', 'Euler Angle Z(yaw)');
-
-
-%% Quaternion to Rotation Axis
-convertType = int32(2);
-
-convertRotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
-figure();
-subplot(1,  2, 1);
-plot(rotAxis(1, :), 'r', 'LineWidth', 2);
-hold on
-plot(rotAxis(2, :), 'g', 'LineWidth', 2);
-hold on
-plot(rotAxis(3, :), 'b', 'LineWidth', 2);
-hold on
-title('Rotation Axis');
-legend('Rotation Axis X', 'Rotation Axis Y', 'Rotation Axis Z');
-subplot(1,  2, 2);
-plot(rotAxis(4, :), 'k', 'LineWidth', 2);
-hold on
-legend('Rotation Axis degree');
-
-
-
+% eulerAngle = zeros(3, ts_count(1));
+% rotAxis = zeros(4, ts_count(1));
+% rotMatrix = zeros(3, 3, ts_count(1));
+%
+%
+% %% Quaternion to Matrix
+% convertType = int32(0);
+%
+% convert_rotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
+% points = ones(ts_count(1), 3);
+% for i=1:size(rotMatrix, 3)
+%     points(i, :) = rotMatrix(:, :, i) * points(i, :)';
+% end
+%
+% figure();
+% plot3(points(:, 1), points(:, 2),  points(:, 3), 'r', 'LineWidth', 2);
+% hold on
+% title('Transform Points');
+% xlabel('X', 'Fontsize', 15);
+% ylabel('Y', 'Fontsize', 15);
+% zlabel('Z', 'Fontsize', 15);
+%
+% %% Quaternion to Euler angle
+% convertType = int32(1);
+%
+% convert_rotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
+% eulerAngle = (eulerAngle * 180 / 3.1415926);
+% figure();
+% plot(eulerAngle(1, :), 'r', 'LineWidth', 2);
+% hold on
+% plot(eulerAngle(2, :), 'g', 'LineWidth', 2);
+% hold on
+% plot(eulerAngle(3, :), 'b', 'LineWidth', 2);
+% hold on
+% title('Euler Angles');
+% legend('Euler Angle X(roll)', 'Euler Angle Y(pitch)', 'Euler Angle Z(yaw)');
+%
+%
+% %% Quaternion to Rotation Axis
+% convertType = int32(2);
+%
+% convert_rotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
+% figure();
+% subplot(1,  2, 1);
+% plot(rotAxis(1, :), 'r', 'LineWidth', 2);
+% hold on
+% plot(rotAxis(2, :), 'g', 'LineWidth', 2);
+% hold on
+% plot(rotAxis(3, :), 'b', 'LineWidth', 2);
+% hold on
+% title('Rotation Axis');
+% legend('Rotation Axis X', 'Rotation Axis Y', 'Rotation Axis Z');
+% subplot(1,  2, 2);
+% plot(rotAxis(4, :), 'k', 'LineWidth', 2);
+% hold on
+% legend('Rotation Axis degree');
+%
+%
 
 
 %% Quaternion to Matrix

@@ -16,7 +16,7 @@
 % Copyright (C) 2017 Zong Wei <zongwave@hotmail.com>
 %
 
-function [vid_frame, frame_count, frame_rate, duration, vid_width, vid_height] = import_video(file)
+function [fullname, vid_frame, frame_count, frame_rate, duration, vid_width, vid_height] = import_video(file)
 
 clc;
 clear;
@@ -29,7 +29,8 @@ if (nargin < 1)
        '*.*',  'All Files (*.*)'}, ...
        'Pick original shaky video file');
 
-vidObj = VideoReader(fullfile(pathname, filename));
+fullname = fullfile(pathname, filename);
+vidObj = VideoReader(fullname);
 
 frame_count  = 0;
 frame_rate = vidObj.FrameRate;
@@ -41,8 +42,9 @@ figure();
 title('Original Video');
 currAxes = axes;
 while hasFrame(vidObj)
+    vidFrame = readFrame(vidObj);
     frame_count = frame_count + 1;
-    vid_frame(frame_count).cdata = readFrame(vidObj);
+    vid_frame(frame_count).cdata = vidFrame;
     image(vid_frame(frame_count).cdata, 'Parent', currAxes);
     currAxes.Visible = 'off';
     pause(0.001/vidObj.FrameRate);
