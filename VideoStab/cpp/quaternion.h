@@ -157,7 +157,7 @@ public:
         return (x == rhs.x) && (y == rhs.y) && (z == rhs.z);
     }
 
-    inline void reset () {
+    inline void zeros () {
         this->x = (T) 0;
         this->y = (T) 0;
         this->z = (T) 0;
@@ -241,7 +241,7 @@ public:
         return (x == rhs.x) && (y == rhs.y) && (z == rhs.z) && (w == rhs.w);
     }
 
-    inline void reset () {
+    inline void zeros () {
         this->x = (T) 0;
         this->y = (T) 0;
         this->z = (T) 0;
@@ -286,13 +286,19 @@ public:
     Vector3<T> v1;
     Vector3<T> v2;
 
-    Matrix3 () : v0(0, 0, 0), v1(0, 0, 0), v2(0, 0, 0) {};
+    Matrix3 () : v0(1, 0, 0), v1(0, 1, 0), v2(0, 0, 1) {};
     Matrix3 (Vector3<T> a, Vector3<T> b, Vector3<T> c) : v0(a), v1(b), v2(c) {};
 
-    inline void reset () {
-        v0.reset();
-        v1.reset();
-        v2.reset();
+    inline void eye () {
+        v0.set(1, 0, 0);
+        v1.set(0, 1, 0);
+        v2.set(0, 0, 1);
+    }
+
+    inline void zeros () {
+        v0.zeros();
+        v1.zeros();
+        v2.zeros();
     }
 
     inline T& at (int row, int col) {
@@ -436,14 +442,21 @@ public:
     Vector4<T> v2;
     Vector4<T> v3;
 
-    Matrix4 () : v0(0, 0, 0, 0), v1(0, 0, 0, 0), v2(0, 0, 0, 0), v3(0, 0, 0, 0)  {};
+    Matrix4 () : v0(1, 0, 0, 0), v1(0, 1, 0, 0), v2(0, 0, 1, 0), v3(0, 0, 0, 1)  {};
     Matrix4 (Vector4<T> a, Vector4<T> b, Vector4<T> c, Vector4<T> d) : v0(a), v1(b), v2(c), v3(d) {};
 
-    inline void reset () {
-        v0.reset();
-        v1.reset();
-        v2.reset();
-        v3.reset();
+    inline void eye () {
+        v0.set(1, 0, 0, 0);
+        v1.set(0, 1, 0, 0);
+        v2.set(0, 0, 1, 0);
+        v3.set(0, 0, 0, 1);
+    }
+
+    inline void zeros () {
+        v0.zeros();
+        v1.zeros();
+        v2.zeros();
+        v3.zeros();
     }
 
     inline T& at (int row, int col) {
@@ -810,24 +823,24 @@ public:
 
     Quaternion<T> slerp(T r, const Quaternion<T>& quat) const {
         Quaternion<T> ret;
-        T cosTheta = w * quat.w + v.x * quat.v.x + v.y * quat.v.y + v.z * quat.v.z;
-        T theta = (T) acos(cosTheta);
+        T cos_theta = w * quat.w + v.x * quat.v.x + v.y * quat.v.y + v.z * quat.v.z;
+        T theta = (T) acos(cos_theta);
         if (fabs(theta) < epsilon)
         {
             ret = *this;
         }
         else
         {
-            T sinTheta = (T) sqrt(1.0 - cosTheta * cosTheta);
-            if (fabs(sinTheta) < epsilon)
+            T sin_theta = (T) sqrt(1.0 - cos_theta * cos_theta);
+            if (fabs(sin_theta) < epsilon)
             {
                 ret.w = 0.5 * w + 0.5 * quat.w;
                 ret.v = v.lerp(0.5, quat.v);
             }
             else
             {
-                T r0 = (T) sin((1.0 - r) * theta) / sinTheta;
-                T r1 = (T) sin(r * theta) / sinTheta;
+                T r0 = (T) sin((1.0 - r) * theta) / sin_theta;
+                T r1 = (T) sin(r * theta) / sin_theta;
 
                 ret.w = w * r0 + quat.w * r1;
                 ret.v.x = v.x * r0 + quat.v.x * r1;
@@ -838,20 +851,20 @@ public:
         return ret;
     }
 
-    static Quaternion<T> createQuaternionFromRotationAxis (Vector3<T> axis, T angleRad) {
-        T thetaOverTwo = angleRad / (T) 2.0;
-        T sinThetaOverTwo = std::sin(thetaOverTwo);
-        T cosThetaOverTwo = std::cos(thetaOverTwo);
-        return Quaternion<T>(axis * sinThetaOverTwo, cosThetaOverTwo);
+    static Quaternion<T> create_quaternion (Vector3<T> axis, T angle_rad) {
+        T theta_over_two = angle_rad / (T) 2.0;
+        T sin_theta_over_two = std::sin(theta_over_two);
+        T cos_theta_over_two = std::cos(theta_over_two);
+        return Quaternion<T>(axis * sin_theta_over_two, cos_theta_over_two);
     }
 
-    static Quaternion<T> createQuaternionFromEulerAngles (Vector3<T> euler) {
-        return createQuaternionFromRotationAxis(Vector3<T>(1, 0, 0), euler.x) *
-               createQuaternionFromRotationAxis(Vector3<T>(0, 1, 0), euler.y) *
-               createQuaternionFromRotationAxis(Vector3<T>(0, 0, 1), euler.z);
+    static Quaternion<T> create_quaternion (Vector3<T> euler) {
+        return create_quaternion(Vector3<T>(1, 0, 0), euler.x) *
+               create_quaternion(Vector3<T>(0, 1, 0), euler.y) *
+               create_quaternion(Vector3<T>(0, 0, 1), euler.z);
     }
 
-    static Quaternion<T> createQuaternionFromRotaionMatrix(const Matrix3<T>& m) {
+    static Quaternion<T> create_quaternion (const Matrix3<T>& m) {
         Quaternion<T> q;
 
         T tr, s;
@@ -870,9 +883,9 @@ public:
             T d1 = m(2, 2);
             T d2 = m(3, 3);
 
-            char bigIdx = (d0 > d1) ? ((d0 > d2) ? 0 : 2):((d1 > d2) ? 1 : 2);
+            char big_idx = (d0 > d1) ? ((d0 > d2) ? 0 : 2):((d1 > d2) ? 1 : 2);
 
-            if (bigIdx == 0)
+            if (big_idx == 0)
             {
                 s = 2.0 * (T) sqrt(1.0 + m(1, 1) - m(2, 2) - m(3, 3));
                 q.w = (m(3, 2) - m(2, 3)) / s;
@@ -880,7 +893,7 @@ public:
                 q.v.y = (m(1, 2) + m(2, 1)) / s;
                 q.v.z = (m(1, 3) + m(3, 1)) / s;
             }
-            else if (bigIdx == 1)
+            else if (big_idx == 1)
             {
                 s = 2.0 * (T) sqrt(1.0 + m(2, 2) - m(1, 1) - m(3, 3));
                 q.w = (m(1, 3) - m(3, 1)) / s;
@@ -901,19 +914,19 @@ public:
         return q;
     }
 
-    inline Vector4<T> rotationAxis () {
-        Vector4<T> rotAxis;
+    inline Vector4<T> rotation_axis () {
+        Vector4<T> rot_axis;
 
-        T cosThetaOverTwo = w;
-        rotAxis.w = (T) std::acos( cosThetaOverTwo ) * 2.0f;
+        T cos_theta_over_two = w;
+        rot_axis.w = (T) std::acos( cos_theta_over_two ) * 2.0f;
 
-        T sinThetaOverTwo = (T) sqrt( 1.0 - cosThetaOverTwo * cosThetaOverTwo );
-        if ( fabs( sinThetaOverTwo ) < 0.0005 ) sinThetaOverTwo = 1;
-        rotAxis.x = v.x / sinThetaOverTwo;
-        rotAxis.y = v.y / sinThetaOverTwo;
-        rotAxis.z = v.z / sinThetaOverTwo;
+        T sin_theta_over_two = (T) sqrt( 1.0 - cos_theta_over_two * cos_theta_over_two );
+        if ( fabs( sin_theta_over_two ) < 0.0005 ) sin_theta_over_two = 1;
+        rot_axis.x = v.x / sin_theta_over_two;
+        rot_axis.y = v.y / sin_theta_over_two;
+        rot_axis.z = v.z / sin_theta_over_two;
 
-        return rotAxis;
+        return rot_axis;
     }
 
 /*
@@ -921,7 +934,7 @@ public:
     theta=asin(2.*(Q(:,1).*Q(:,3)+Q(:,2).*Q(:,4)));
     phi=atan2(2.*(Q(:,3).*Q(:,4)-Q(:,1).*Q(:,2)),(Q(:,4).^2+Q(:,1).^2-Q(:,2).^2-Q(:,3).^2));
 */
-    inline Vector3<T> eulerAngles () {
+    inline Vector3<T> euler_angles () {
         Vector3<T> euler;
 
         // atan2(2*(qx*qw-qy*qz) , qw2-qx2-qy2+qz2)
@@ -938,7 +951,7 @@ public:
         return euler;
     }
 
-    inline Matrix3<T> rotationMatrix () {
+    inline Matrix3<T> rotation_matrix () {
         Matrix3<T> mat;
 
         T xx = v.x * v.x;

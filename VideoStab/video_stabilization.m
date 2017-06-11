@@ -33,10 +33,17 @@ if filename ~= 0
     proj_mat = load(fullfile(pathname, filename));
     field = fieldnames(proj_mat);
  
-    rot_mat = cell2mat(getfield(proj_mat, cell2mat(field)));
-    rot_mat = reshape(rot_mat, 3, 3, size(rot_mat, 2)/3);
+    homo_mat = cell2mat(getfield(proj_mat, cell2mat(field)));
+    homo_mat = reshape(homo_mat, 3, 3, size(homo_mat, 2)/3);
 
-    matrix_type = 'Optical Flow ...';
+    if strcmp(field, 'homo_mat')
+        motion_stab(0, 0, 0, 0, 0, 0, homo_mat);
+        rot_mat = homo_mat;
+        matrix_type = 'Optical_Flow_Motion_Stab';
+    else
+        rot_mat = homo_mat;
+        matrix_type = 'Optical_Flow';
+    end
 else
 
     % Intrinsic Camera Parameters
@@ -51,8 +58,8 @@ else
     rot_mat = zeros(3, 3, size(gyro_time, 1));
 
     calib_param = [fc; cc; alpha_c; readout_time; gyro_delay; gyro_drifft];
-    projective2d_matrix(frame_time, frame_size, gyro_pos', gyro_quat', gyro_time, calib_param, rot_mat);
-    matrix_type = 'Gyro 3-DOF...';
+    motion_stab(frame_time, frame_size, gyro_pos', gyro_quat', gyro_time, calib_param, rot_mat);
+    matrix_type = 'Gyro 3-DOF';
 end
 
 [vid_name, vid_frame, frame_count, frame_rate, duration, vid_width, vid_height] = import_video();
@@ -90,7 +97,7 @@ for i=1: frame_count
         warp_idx = warp_count;
     end
     warp_mat = projective2d(inv(rot_mat(:, :, warp_idx)'));
-    warp_mat.T
+    rot_mat(:, :, warp_idx)
 
     outputView = imref2d([vid_height, vid_width]);
     stabilized = imwarp(vid_frame(i).cdata, warp_mat, 'OutputView', outputView);

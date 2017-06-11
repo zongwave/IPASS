@@ -50,21 +50,96 @@ for i=1: num_of_mat
     if strcmp(field, 'gyro_mat')
         projective2d = rot_mat.gyro_mat;
     elseif strcmp(field, 'rot_mat')
-        projective2d = rot_mat.rot_mat;
+        projective2d = rot_mat.rot_mat();
     end
 
     trans_x = projective2d(1, 3, :);
-    trans_x = trans_x(:);
+    t_x{i} = trans_x(:);
     trans_y = projective2d(2, 3, :);
-    trans_y = trans_y(:);
+    t_y{i} = trans_y(:);
 
     scale_x = projective2d(1, 1, :);
-    scale_x = scale_x(:);
+    s_x{i} = scale_x(:);
     scale_y = projective2d(2, 2, :);
-    scale_y = scale_y(:);
+    s_y{i} = scale_y(:);
 
-    plot(trans_y);
+    rot_x = projective2d(1, 2, :);
+    r_x{i} = rot_x(:);
+    rot_y = projective2d(2, 1, :);
+    r_y{i} = rot_y(:);
+
+    proj_x = projective2d(3, 1, :);
+    p_x{i} = proj_x(:);
+    proj_y = projective2d(3, 2, :);
+    p_y{i} = proj_y(:);
+
+    homo_w = projective2d(3, 3, :);
+    h_w{i} = homo_w(:);
+end
+
+curve_len = 80;
+
+figure();
+for i=1: num_of_mat
+    plot(t_y{i}(1:curve_len), 'LineWidth', 2);
     hold on
 end
+legend([filename{1} 'T_Y'], [filename{2} 'T_Y']);
+
+figure();
+for i=1: num_of_mat
+    plot(t_x{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'T_X'], [filename{2} 'T_X']);
+
+figure();
+for i=1: num_of_mat
+    plot(s_y{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'S_Y'], [filename{2} 'S_Y']);
+
+figure();
+for i=1: num_of_mat
+    plot(s_x{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'S_X'], [filename{2} 'S_X']);
+
+figure();
+for i=1: num_of_mat
+    plot(r_y{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'R_Y'], [filename{2} 'R_Y']);
+
+figure();
+for i=1: num_of_mat
+    plot(r_x{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'R_X'], [filename{2} 'R_X']);
+
+figure();
+for i=1: num_of_mat
+    plot(p_y{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'P_Y'], [filename{2} 'P_Y']);
+
+figure();
+for i=1: num_of_mat
+    plot(p_x{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'P_X'], [filename{2} 'P_X']);
+
+figure();
+for i=1: num_of_mat
+    plot(h_w{i}(1:curve_len), 'LineWidth', 2);
+    hold on
+end
+legend([filename{1} 'H_W'], [filename{2} 'H_W']);
 
 end
