@@ -69,6 +69,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         switch (conversion) {
         case QUAT2MATRIX:
             matrix[i] = quater.rotation_matrix();
+            qt = Quatern::create_quaternion(matrix[i]);
+            mexPrintf("quatern(%d) = [ %lf, %lf, %lf, %lf ] \n", i, qt.v.x, qt.v.y, qt.v.z, qt.w);
             break;
 
         case QUAT2EULER:

@@ -29,16 +29,16 @@ if (nargin < 1)
        'Pick projective 2D file', ...
        'MultiSelect', 'on');
 
- if (iscell(filename) == 0)
-     if filename == 0
-         num_of_mat = 0;
-     else
-         num_of_mat = 1;
-     end
- else
-     num_of_mat = length(filename);
- end
- 
+if (iscell(filename) == 0)
+    if filename == 0
+        num_of_mat = 0;
+    else
+        num_of_mat = 1;
+    end
+else
+    num_of_mat = length(filename);
+end
+
 for i=1: num_of_mat
     if (iscell(filename) == 0)
         rot_mat = load(fullfile(pathname, filename));
@@ -57,6 +57,8 @@ for i=1: num_of_mat
     t_x{i} = trans_x(:);
     trans_y = projective2d(2, 3, :);
     t_y{i} = trans_y(:);
+
+    curve_len{i} = size(t_y{i}, 1);
 
     scale_x = projective2d(1, 1, :);
     s_x{i} = scale_x(:);
@@ -77,67 +79,66 @@ for i=1: num_of_mat
     h_w{i} = homo_w(:);
 end
 
-curve_len = 80;
 
 figure();
 for i=1: num_of_mat
-    plot(t_y{i}(1:curve_len), 'LineWidth', 2);
+    plot(t_y{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'T_Y'], [filename{2} 'T_Y']);
 
 figure();
 for i=1: num_of_mat
-    plot(t_x{i}(1:curve_len), 'LineWidth', 2);
+    plot(t_x{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'T_X'], [filename{2} 'T_X']);
 
 figure();
 for i=1: num_of_mat
-    plot(s_y{i}(1:curve_len), 'LineWidth', 2);
+    plot(s_y{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'S_Y'], [filename{2} 'S_Y']);
 
 figure();
 for i=1: num_of_mat
-    plot(s_x{i}(1:curve_len), 'LineWidth', 2);
+    plot(s_x{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'S_X'], [filename{2} 'S_X']);
 
 figure();
 for i=1: num_of_mat
-    plot(r_y{i}(1:curve_len), 'LineWidth', 2);
+    plot(r_y{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'R_Y'], [filename{2} 'R_Y']);
 
 figure();
 for i=1: num_of_mat
-    plot(r_x{i}(1:curve_len), 'LineWidth', 2);
+    plot(r_x{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'R_X'], [filename{2} 'R_X']);
 
 figure();
 for i=1: num_of_mat
-    plot(p_y{i}(1:curve_len), 'LineWidth', 2);
+    plot(p_y{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'P_Y'], [filename{2} 'P_Y']);
 
 figure();
 for i=1: num_of_mat
-    plot(p_x{i}(1:curve_len), 'LineWidth', 2);
+    plot(p_x{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'P_X'], [filename{2} 'P_X']);
 
 figure();
 for i=1: num_of_mat
-    plot(h_w{i}(1:curve_len), 'LineWidth', 2);
+    plot(h_w{i}(1:curve_len{i}), 'LineWidth', 2);
     hold on
 end
 legend([filename{1} 'H_W'], [filename{2} 'H_W']);

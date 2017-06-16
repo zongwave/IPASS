@@ -29,15 +29,13 @@ if (nargin < 1)
        '*.*',  'All Files (*.*)'}, ...
        'Pick Gyro 6-DOF file');
 
-    [pathstr, name, ext] = fileparts(filename)
+[pathstr, name, ext] = fileparts(filename)
 
-    if  strcmp(ext, '.data')
+if  strcmp(ext, '.data')
         fid = fopen(fullfile(pathname, filename));
-    end
 else
    fid = fopen('gyro.data');
 end;
-
 
 if  strcmp(ext, '.csv')
     gyro_data = csvread(fullfile(pathname, filename));
@@ -176,48 +174,52 @@ hold on
 legend('Rotation Axis degree');
 
 
-%% Quaternion to Matrix
-rotMatrix_SC = SpinCalc('QtoDCM', quatern, 0.01, 1);
-points = ones(ts_count(1), 3);
-for i=1:size(rotMatrix_SC, 3)
-    points(i, :) = rotMatrix_SC(:, :, i) * points(i, :)';
-end
 
-figure();
-plot3(points(:, 1), points(:, 2),  points(:, 3), 'r', 'LineWidth', 2);
-hold on
-title('SpinCalc Transform Points');
-xlabel('X', 'Fontsize', 15);
-ylabel('Y', 'Fontsize', 15);
-zlabel('Z', 'Fontsize', 15);
+
+%%% Test by SpinCalc
+
+%% Quaternion to Matrix
+% rotMatrix_SC = SpinCalc('QtoDCM', quatern, 0.01, 1);
+% points = ones(ts_count(1), 3);
+% for i=1:size(rotMatrix_SC, 3)
+%     points(i, :) = rotMatrix_SC(:, :, i) * points(i, :)';
+% end
+%
+% figure();
+% plot3(points(:, 1), points(:, 2),  points(:, 3), 'r', 'LineWidth', 2);
+% hold on
+% title('SpinCalc Transform Points');
+% xlabel('X', 'Fontsize', 15);
+% ylabel('Y', 'Fontsize', 15);
+% zlabel('Z', 'Fontsize', 15);
 
 % %% Quaternion to Euler angles
-eulerAngle_SC = SpinCalc('QtoEA123', quatern, 0.01, 1);
-figure();
-plot(eulerAngle_SC(:, 1), 'r', 'LineWidth', 2);
-hold on
-plot(eulerAngle_SC(:, 2), 'g', 'LineWidth', 2);
-hold on
-plot(eulerAngle_SC(:, 3), 'b', 'LineWidth', 2);
-hold on
-title('SpinCalc Euler Angles');
-legend('Euler Angles X', 'Euler Angles Y', 'Euler Angles Z');
+% eulerAngle_SC = SpinCalc('QtoEA123', quatern, 0.01, 1);
+% figure();
+% plot(eulerAngle_SC(:, 1), 'r', 'LineWidth', 2);
+% hold on
+% plot(eulerAngle_SC(:, 2), 'g', 'LineWidth', 2);
+% hold on
+% plot(eulerAngle_SC(:, 3), 'b', 'LineWidth', 2);
+% hold on
+% title('SpinCalc Euler Angles');
+% legend('Euler Angles X', 'Euler Angles Y', 'Euler Angles Z');
 
 % %% Quternion to rotation vector
-rotAxis_SC = SpinCalc('QtoEV', quatern, 0.01, 1);
-figure();
-subplot(1,  2, 1);
-plot(rotAxis_SC(:, 1), 'r', 'LineWidth', 2);
-hold on
-plot(rotAxis_SC(:, 2), 'g', 'LineWidth', 2);
-hold on
-plot(rotAxis_SC(:, 3), 'b', 'LineWidth', 2);
-hold on
-title('SpinCalc Rotation Axis');
-legend('Rotation Axis X', 'Rotation Axis Y', 'Rotation Axis Z');
-subplot(1,  2, 2);
-plot(rotAxis_SC(:, 4), 'k', 'LineWidth', 2);
-hold on
-legend('Rotation Axis degree');
+% rotAxis_SC = SpinCalc('QtoEV', quatern, 0.01, 1);
+% figure();
+% subplot(1,  2, 1);
+% plot(rotAxis_SC(:, 1), 'r', 'LineWidth', 2);
+% hold on
+% plot(rotAxis_SC(:, 2), 'g', 'LineWidth', 2);
+% hold on
+% plot(rotAxis_SC(:, 3), 'b', 'LineWidth', 2);
+% hold on
+% title('SpinCalc Rotation Axis');
+% legend('Rotation Axis X', 'Rotation Axis Y', 'Rotation Axis Z');
+% subplot(1,  2, 2);
+% plot(rotAxis_SC(:, 4), 'k', 'LineWidth', 2);
+% hold on
+% legend('Rotation Axis degree');
 
 end

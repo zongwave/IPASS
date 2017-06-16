@@ -19,10 +19,14 @@
 #include <vector>
 #include "mex.h"
 
-#include "calculate_projective2d.h"
+#include "calc_projective2d.h"
 
 #define LOG_MESSAGE mexPrintf
 #define ASSERT assert
+
+Mat3 negive_second(Vec3(1, 0, 0),
+                   Vec3(0, 1, 0),
+                   Vec3(0, 0, 1));
 
 //interp(gyro_time, gyro_quat, ts, num_gyro_samp, start);
 Quatern interp(double* tx, Vec4* x, double ty, size_t num, int& start)
@@ -49,7 +53,7 @@ Quatern interp(double* tx, Vec4* x, double ty, size_t num, int& start)
     //return Quatern(x[i]).slerp(w, Quatern(x[i + 1]));
 }
 
-Mat3 get_intrinsic(double focal_x, double focal_y, double offset_x, double offset_y, double skew)
+Mat3 calc_intrinsic(double focal_x, double focal_y, double offset_x, double offset_y, double skew)
 {
     Mat3 k(Vec3(focal_x, 0, 0),
            Vec3(skew, focal_y, 0),
@@ -67,19 +71,15 @@ Mat3 get_intrinsic(double focal_x, double focal_y, double offset_x, double offse
                         invK(3, 1), invK(3, 2), invK(3, 3));
 #endif
 
-    return k;
+    return k * negive_second;
 }
 
-Mat3 get_extrinsic(Quatern rotation)
+Mat3 calc_extrinsic(Quatern rotation)
 {
     // specify the camera's pose directly rather than
     // specifying how world points should transform to camera coordinates.
     Mat3 extrinsic = rotation.rotation_matrix();
-    Mat3 negive_second_row(Vec3(1, 0, 0),
-                           Vec3(0, -1, 0),
-                           Vec3(0, 0, 1));
-    //extrinsic = negive_second_row * extrinsic;
-    //Mat3 extrinsic = rotation.rotation_matrix();
+
 #if PRINT_MATRIX
     LOG_MESSAGE("%%extrinsic Matrix(3x3) \n");
     LOG_MESSAGE("R33 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
@@ -88,19 +88,19 @@ Mat3 get_extrinsic(Quatern rotation)
                        extrinsic(3, 1), extrinsic(3, 2), extrinsic(3, 3));
 #endif
 
-   return extrinsic;
+   return negive_second * extrinsic;
 }
 
-Mat4 get_extrinsic(Quatern rotation, Vec3 translation)
+Mat4 calc_extrinsic(Quatern rotation, Vec3 translation)
 {
     // specify the camera's pose directly rather than
     // specifying how world points should transform to camera coordinates.
     Mat3 rot = rotation.rotation_matrix().transpose();
     Vec3 trans = -translation;
     Mat4 extrinsic(Vec4(rot.v0, 0),
-                    Vec4(rot.v1, 0),
-                    Vec4(rot.v2, 0),
-                    Vec4((rot * trans), 1));
+                   Vec4(rot.v1, 0),
+                   Vec4(rot.v2, 0),
+                   Vec4((rot * trans), 1));
 #if PRINT_MATRIX
         LOG_MESSAGE("%%extrinsic Matrix(4x4) \n");
         LOG_MESSAGE("R44 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
@@ -113,18 +113,18 @@ Mat4 get_extrinsic(Quatern rotation, Vec3 translation)
    return extrinsic;
 }
 
-Mat3 calculate_homography(Mat3 rot_mat0, Mat3 rot_mat1, Mat3 k)
+Mat3 calc_homography(Mat3 rot_mat0, Mat3 rot_mat1, Mat3 k)
 {
     return k * rot_mat1 * rot_mat0.transpose() * k.inverse();
 }
 
-void calculate_projective2d(Vec4* gyro_quat,
-                    Vec3* acc_trans,
-                    size_t num_gyro_samp,
-                    double* time_stamp,
-                    double* frame_time,
-                    CalibrationParams calib,
-                    std::vector<Mat3>& projective)
+void calc_projective2d(Vec4* gyro_quat,
+                       Vec3* acc_trans,
+                       size_t num_gyro_samp,
+                       double* time_stamp,
+                       double* frame_time,
+                       CalibrationParams calib,
+                       std::vector<Mat3>& projective)
 {
     int start0 = 0;
     int start1 = 0;
@@ -139,21 +139,21 @@ void calculate_projective2d(Vec4* gyro_quat,
         Vec3 trans0 = acc_trans[fid];
         Vec3 trans1 = acc_trans[fid + 1];
 
-        //Mat4 extr0 = get_extrinsic(rot0, trans0);
-        //Mat4 extr1 = get_extrinsic(rot1, trans1);
-        Mat3 extr0 = get_extrinsic(rot0);
-        Mat3 extr1 = get_extrinsic(rot1);
-        Mat3 intrin = get_intrinsic(calib.fx, calib.fy, calib.cx, calib.cy, calib.skew);
+        //Mat4 extr0 = calc_extrinsic(rot0, trans0);
+        //Mat4 extr1 = calc_extrinsic(rot1, trans1);
+        Mat3 extr0 = calc_extrinsic(rot0);
+        Mat3 extr1 = calc_extrinsic(rot1);
+        Mat3 intrin = calc_intrinsic(calib.fx, calib.fy, calib.cx, calib.cy, calib.skew);
 
-        projective[fid] = calculate_homography(extr0, extr1, intrin);
+        projective[fid] = calc_homography(extr0, extr1, intrin);
     }
 }
 
-Mat3 calculate_projective2d(Vec4* gyro_quat,
-                    Vec3* acc_trans,
-                    double* time_stamp,
-                    double frame_time,
-                    CalibrationParams calib)
+Mat3 calc_projective2d(Vec4* gyro_quat,
+                       Vec3* acc_trans,
+                       double* time_stamp,
+                       double frame_time,
+                       CalibrationParams calib)
 {
     double ts0 = time_stamp[0] + calib.gyro_delay;
     Quatern rot0 = gyro_quat[0];// + Quatern(calib.gyro_drift);
@@ -164,12 +164,12 @@ Mat3 calculate_projective2d(Vec4* gyro_quat,
     Vec3 trans0 = acc_trans[0];
     Vec3 trans1 = acc_trans[1];
 
-    //Mat4 extr0 = get_extrinsic(rot0, trans0);
-    //Mat4 extr1 = get_extrinsic(rot1, trans1);
-    Mat3 extr0 = get_extrinsic(rot0);
-    Mat3 extr1 = get_extrinsic(rot1);
-    Mat3 intrin = get_intrinsic(calib.fx, calib.fy, calib.cx, calib.cy, calib.skew);
+    //Mat4 extr0 = calc_extrinsic(rot0, trans0);
+    //Mat4 extr1 = calc_extrinsic(rot1, trans1);
+    Mat3 extr0 = calc_extrinsic(rot0);
+    Mat3 extr1 = calc_extrinsic(rot1);
+    Mat3 intrin = calc_intrinsic(calib.fx, calib.fy, calib.cx, calib.cy, calib.skew);
 
-    return calculate_homography(extr0, extr1, intrin);
+    return calc_homography(extr0, extr1, intrin);
 }
 

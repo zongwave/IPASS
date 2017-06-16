@@ -41,18 +41,18 @@ struct CalibrationParams {
     double readout_time;
 };
 
-void calculate_projective2d(Vec4* gyro_quat,
-                    Vec3* acc_trans,
-                    size_t num_gyro_samp,
-                    double* time_stamp,
-                    double* frame_time,
-                    CalibrationParams calib,
-                    std::vector<Mat3>& projective);
+void calc_projective2d(Vec4* gyro_quat,
+                       Vec3* acc_trans,
+                       size_t num_gyro_samp,
+                       double* time_stamp,
+                       double* frame_time,
+                       CalibrationParams calib,
+                       std::vector<Mat3>& projective);
 
-Mat3 calculate_projective2d(Vec4* gyro_quat,
-                    Vec3* acc_trans,
-                    double* time_stamp,
-                    double frame_time,
-                    CalibrationParams calib);
+Mat3 calc_projective2d(Vec4* gyro_quat,
+                       Vec3* acc_trans,
+                       double* time_stamp,
+                       double frame_time,
+                       CalibrationParams calib);
 
 #endif

@@ -16,7 +16,7 @@
 // Copyright (C) 2017 Zong Wei <zongwave@hotmail.com>
 //
 
-#include "../cpp/calculate_projective2d.h"
+#include "../cpp/calc_projective2d.h"
 #include "../cpp/stabilize_motion.h"
 #include "mex.h"
 
@@ -91,29 +91,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (num_gyro_samp > 1) {
         projective.resize(num_gyro_samp);
 
-        calculate_projective2d(gyro_quat,
+        calc_projective2d(gyro_quat,
                    acc_trans,
                    num_gyro_samp,
                    frame_time,
                    time_stamp,
                    calib,
                    projective);
-
-        for (int idx = 0; idx < num_gyro_samp; idx++) {
-            homography[idx] = projective[idx];
-        }
     } else {
         projective.resize(num_homo);
 
         for (int idx = 0; idx < num_homo; idx++) {
             projective[idx] = homography[idx];
         }
+    }
 
-        MotionFilter motion_filter(15, 10);
-        for (int idx = 0; idx < num_homo; idx++) {
-            homography[idx] = motion_filter.stabilize(idx, projective, (int)num_homo, 0);
-            homography[idx] = homography[idx].inverse();
-        }
+    MotionFilter motion_filter(15, 10);
+    for (int idx = 0; idx < num_homo; idx++) {
+        homography[idx] = motion_filter.stabilize(idx, projective, (int)num_homo, 0);
+        homography[idx] = homography[idx].inverse();
     }
 
     projective.clear();
