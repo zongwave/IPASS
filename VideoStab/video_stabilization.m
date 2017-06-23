@@ -1,19 +1,20 @@
-% Digital Video Stabilization using Gyroscope & Accelerometer (6-DOF)
+%   video_stabilizaton.m - main function to launch video stabilization
 %
-% This program is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% any later version.
+%    Copyright (c) 2017 Intel Corporation
 %
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
+%   Licensed under the Apache License, Version 2.0 (the "License");
+%   you may not use this file except in compliance with the License.
+%   You may obtain a copy of the License at
 %
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%        http://www.apache.org/licenses/LICENSE-2.0
 %
-% Copyright (C) 2017 Zong Wei <zongwave@hotmail.com>
+%   Unless required by applicable law or agreed to in writing, software
+%   distributed under the License is distributed on an "AS IS" BASIS,
+%   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%   See the License for the specific language governing permissions and
+%   limitations under the License.
+%
+%   Author: Zong Wei <wei.zong@intel.com>
 %
 
 function video_stabilization(file)
@@ -37,29 +38,29 @@ if filename ~= 0
     homo_mat = reshape(homo_mat, 3, 3, size(homo_mat, 2)/3);
 
     if strcmp(field, 'homo_mat')
-        motion_stab(0, 0, 0, 0, 0, 0, homo_mat);
+        video_stab_interface(0, 0, 0, 0, 0, 0, homo_mat);
         rot_mat = homo_mat;
-        matrix_type = 'Optical_Flow_Motion_Stab';
+        matrix_type = 'Optical Flow Motion Stab';
     else
         rot_mat = homo_mat;
-        matrix_type = 'Optical_Flow';
+        matrix_type = 'Optical Flow';
     end
 else
 
     % Intrinsic Camera Parameters
-    [fc, cc, alpha_c, kc, fc_error, cc_error, alpha_c_error, kc_error, frame_size] = import_intrinsic();
+    [fc, cc, alpha_c, kc, fc_error, cc_error, alpha_c_error, kc_error, frame_size] = import_camera_intrinsics();
 
     % Extrinsic Camera Parameters
-    [gyro_time, gyro_pos, gyro_quat] = import_gyro_data();
-    frame_time = gyro_time;
+    [gyro_ts, gyro_pos, gyro_quat] = import_camera_pose();
+    frame_ts = gyro_ts;
     readout_time = 0;
     gyro_delay = 0;
     gyro_drifft = 0;
-    rot_mat = zeros(3, 3, size(gyro_time, 1));
+    rot_mat = zeros(3, 3, size(gyro_ts, 1));
 
     calib_param = [fc; cc; alpha_c; readout_time; gyro_delay; gyro_drifft];
-    motion_stab(frame_time, frame_size, gyro_pos', gyro_quat', gyro_time, calib_param, rot_mat);
-    matrix_type = 'Gyro 3-DOF';
+    video_stab_interface(frame_ts, frame_size, gyro_pos', gyro_quat', gyro_ts, calib_param, rot_mat);
+    matrix_type = 'Gyro 3DOF';
 end
 
 [vid_name, vid_frame, frame_count, frame_rate, duration, vid_width, vid_height] = import_video();
@@ -97,7 +98,7 @@ for i=1: frame_count
         warp_idx = warp_count;
     end
     warp_mat = projective2d(inv(rot_mat(:, :, warp_idx)'));
-    rot_mat(:, :, warp_idx)
+%     rot_mat(:, :, warp_idx)
 
     outputView = imref2d([vid_height, vid_width]);
     stabilized = imwarp(vid_frame(i).cdata, warp_mat, 'OutputView', outputView);

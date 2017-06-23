@@ -1,19 +1,20 @@
-% Digital Video Stabilization using Gyroscope & Accelerometer (6-DOF)
+%   analyze_projective2d.m - Plot projection matrix to analyze
 %
-% This program is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% any later version.
+%    Copyright (c) 2017 Intel Corporation
 %
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
+%   Licensed under the Apache License, Version 2.0 (the "License");
+%   you may not use this file except in compliance with the License.
+%   You may obtain a copy of the License at
 %
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%        http://www.apache.org/licenses/LICENSE-2.0
 %
-% Copyright (C) 2017 Zong Wei <zongwave@hotmail.com>
+%   Unless required by applicable law or agreed to in writing, software
+%   distributed under the License is distributed on an "AS IS" BASIS,
+%   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%   See the License for the specific language governing permissions and
+%   limitations under the License.
+%
+%   Author: Zong Wei <wei.zong@intel.com>
 %
 
 function analyze_projective2d(file)
@@ -49,8 +50,10 @@ for i=1: num_of_mat
     field = fieldnames(rot_mat);
     if strcmp(field, 'gyro_mat')
         projective2d = rot_mat.gyro_mat;
-    elseif strcmp(field, 'rot_mat')
+        curve{i} = 'Gyro 3DOF';
+   elseif strcmp(field, 'rot_mat')
         projective2d = rot_mat.rot_mat();
+        curve{i} = 'Optical Flow';
     end
 
     trans_x = projective2d(1, 3, :);
@@ -79,68 +82,76 @@ for i=1: num_of_mat
     h_w{i} = homo_w(:);
 end
 
+if curve_len{1} > 270
+    curve_step = 3;
+elseif curve_len{1} > 180
+    curve_step = 2;
+else
+    curve_step = 1;
+end
 
 figure();
+subplot(3, 3, 1);
 for i=1: num_of_mat
-    plot(t_y{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(s_x{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'T_Y'], [filename{2} 'T_Y']);
+legend([curve{1} '  S_X'], [curve{2} '  S_X']);
 
-figure();
+subplot(3, 3, 2);
 for i=1: num_of_mat
-    plot(t_x{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(r_x{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'T_X'], [filename{2} 'T_X']);
+legend([curve{1} '  R_X'], [curve{2} '  R_X']);
 
-figure();
+subplot(3, 3, 3);
 for i=1: num_of_mat
-    plot(s_y{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(t_x{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'S_Y'], [filename{2} 'S_Y']);
+legend([curve{1} '  T_X'], [curve{2} '  T_X']);
 
-figure();
+subplot(3, 3, 4);
 for i=1: num_of_mat
-    plot(s_x{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(r_y{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'S_X'], [filename{2} 'S_X']);
+legend([curve{1} '  R_Y'], [curve{2} '  R_Y']);
 
-figure();
+subplot(3, 3, 5);
 for i=1: num_of_mat
-    plot(r_y{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(s_y{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'R_Y'], [filename{2} 'R_Y']);
+legend([curve{1} '  S_Y'], [curve{2} '  S_Y']);
 
-figure();
+subplot(3, 3, 6);
 for i=1: num_of_mat
-    plot(r_x{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(t_y{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'R_X'], [filename{2} 'R_X']);
+legend([curve{1} '  T_Y'], [curve{2} '  T_Y']);
 
-figure();
+subplot(3, 3, 7);
 for i=1: num_of_mat
-    plot(p_y{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(p_x{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'P_Y'], [filename{2} 'P_Y']);
+legend([curve{1} '  P_X'], [curve{2} '  P_X']);
 
-figure();
+subplot(3, 3, 8);
 for i=1: num_of_mat
-    plot(p_x{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(p_y{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'P_X'], [filename{2} 'P_X']);
+legend([curve{1} '  P_Y'], [curve{2} '  P_Y']);
 
-figure();
+subplot(3, 3, 9);
 for i=1: num_of_mat
-    plot(h_w{i}(1:curve_len{i}), 'LineWidth', 2);
+    plot(h_w{i}(1: curve_step: curve_len{i}), 'LineWidth', 2);
     hold on
 end
-legend([filename{1} 'H_W'], [filename{2} 'H_W']);
+legend([curve{1} '  H_W'], [curve{2} '  H_W']);
 
 end
