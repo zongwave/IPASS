@@ -1,0 +1,2 @@
+Color CameraIntrinsics, image_width: 1920, image_height :1080, fx: 1707.799171, fy: 1710.337510, cx: 940.413257, cy: 540.198348, image_plane_distance: 1.778957.
+Color Camera Frame with respect to IMU Frame, Position: 0.045699, -0.008592, -0.006434. Orientation: -0.013859, -0.999889, 0.002361, 0.005021

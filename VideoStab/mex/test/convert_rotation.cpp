@@ -1,20 +1,22 @@
-// Digital Video Stabilization using Gyroscope & Accelerometer (6-DOF)
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-// Copyright (C) 2017 Zong Wei <zongwave@hotmail.com>
-//
+/*
+ * convert_rotation.cpp - Quaternion/Matrix rotation test function
+ *
+ *  Copyright (c) 2017 Intel Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Zong Wei <wei.zong@intel.com>
+ */
 
 #include "mex.h"
 
@@ -35,82 +37,6 @@ typedef Quaternion<double> Quatern;
 #define EULER_ANGLE  prhs[2]
 #define ROTA_ANGLE   prhs[3]
 #define ROTA_MATRIX  prhs[4]
-
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
-    if ( nrhs != 5 ||
-         !mxIsInt32(CONVERSION)  ||
-         !mxIsDouble(QUATERNION) ||
-         !mxIsDouble(EULER_ANGLE)||
-         !mxIsDouble(ROTA_ANGLE) ||
-         !mxIsDouble(ROTA_MATRIX) )
-    {
-        mexPrintf("input %d, %d, %d, %d, %d \n",
-            !mxIsInt32(CONVERSION),
-            !mxIsDouble(QUATERNION),
-            !mxIsDouble(EULER_ANGLE),
-            !mxIsDouble(ROTA_ANGLE),
-            !mxIsDouble(ROTA_MATRIX));
-        mexErrMsgTxt("Incorrect input/output argument format");
-    }
-
-    int conversion = mxGetScalar(CONVERSION);
-    Vec4* quat = (Vec4*)mxGetData(QUATERNION);
-    Vec3* euler = (Vec3*)mxGetData(EULER_ANGLE);
-    Vec4* rotAixs = (Vec4*)mxGetData(ROTA_ANGLE);
-    Mat3* matrix = (Mat3*)mxGetData(ROTA_MATRIX);
-    int num_quat = mxGetNumberOfElements(QUATERNION) / 4;
-
-    for (int i = 0; i < num_quat; ++i)
-    {
-        Quatern quater(quat[i]);
-        Quatern qt;
-
-        switch (conversion) {
-        case QUAT2MATRIX:
-            matrix[i] = quater.rotation_matrix();
-            qt = Quatern::create_quaternion(matrix[i]);
-            mexPrintf("quatern(%d) = [ %lf, %lf, %lf, %lf ] \n", i, qt.v.x, qt.v.y, qt.v.z, qt.w);
-            break;
-
-        case QUAT2EULER:
-            euler[i] = quater.euler_angles();
-            break;
-
-        case QUAT2ROTA:
-            rotAixs[i] = quater.rotation_axis();
-            break;
-
-        case MATRIX2QUAT:
-            qt = Quatern::create_quaternion(matrix[i]);
-            quat[i].x = qt.v.x;
-            quat[i].y = qt.v.y;
-            quat[i].z = qt.v.z;
-            quat[i].w = qt.w;
-            break;
-
-        case EULER2QUAT:
-            qt = Quatern::create_quaternion(euler[i]);
-            quat[i].x = qt.v.x;
-            quat[i].y = qt.v.y;
-            quat[i].z = qt.v.z;
-            quat[i].w = qt.w;
-            break;
-
-        case ROTA2QUAT:
-            qt = Quatern::create_quaternion(Vec3(rotAixs[i].x, rotAixs[i].y, rotAixs[i].z), rotAixs[i].w);
-            quat[i].x = qt.v.x;
-            quat[i].y = qt.v.y;
-            quat[i].z = qt.v.z;
-            quat[i].w = qt.w;
-            break;
-
-        default:
-            break;
-        }
-    }
-}
-
 
 void test_matrix_multiplication()
 {
@@ -149,55 +75,55 @@ void test_matrix_multiplication()
     Mat3 d3 = D3.inverse();
 
     mexPrintf("A3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                      A3.v0.x, A3.v1.x, A3.v2.x,
-                      A3.v0.y, A3.v1.y, A3.v2.y,
-                      A3.v0.z, A3.v1.z, A3.v2.z);
+                      A3(1, 1), A3(1, 2), A3(1, 3),
+                      A3(2, 1), A3(2, 2), A3(2, 3),
+                      A3(3, 1), A3(3, 2), A3(3, 3));
     mexPrintf("A3_T = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                        AA3.v0.x, AA3.v1.x, AA3.v2.x,
-                        AA3.v0.y, AA3.v1.y, AA3.v2.y,
-                        AA3.v0.z, AA3.v1.z, AA3.v2.z);
+                        AA3(1, 1), AA3(1, 2), AA3(1, 3),
+                        AA3(2, 1), AA3(2, 2), AA3(2, 3),
+                        AA3(3, 1), AA3(3, 2), AA3(3, 3));
     mexPrintf("invA3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                         a3.v0.x, a3.v1.x, a3.v2.x,
-                         a3.v0.y, a3.v1.y, a3.v2.y,
-                         a3.v0.z, a3.v1.z, a3.v2.z);
+                         a3(1, 1), a3(1, 2), a3(1, 3),
+                         a3(2, 1), a3(2, 2), a3(2, 3),
+                         a3(3, 1), a3(3, 2), a3(3, 3));
     mexPrintf("B3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                      B3.v0.x, B3.v1.x, B3.v2.x,
-                      B3.v0.y, B3.v1.y, B3.v2.y,
-                      B3.v0.z, B3.v1.z, B3.v2.z);
+                      B3(1, 1), B3(1, 2), B3(1, 3),
+                      B3(2, 1), B3(2, 2), B3(2, 3),
+                      B3(3, 1), B3(3, 2), B3(3, 3));
     mexPrintf("invB3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                          b3.v0.x, b3.v1.x, b3.v2.x,
-                          b3.v0.y, b3.v1.y, b3.v2.y,
-                          b3.v0.z, b3.v1.z, b3.v2.z);
+                          b3(1, 1), b3(1, 2), b3(1, 3),
+                          b3(2, 1), b3(2, 2), b3(2, 3),
+                          b3(3, 1), b3(3, 2), b3(3, 3));
     mexPrintf("B3_T = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                        BB3.v0.x, BB3.v1.x, BB3.v2.x,
-                        BB3.v0.y, BB3.v1.y, BB3.v2.y,
-                        BB3.v0.z, BB3.v1.z, BB3.v2.z);
+                        BB3(1, 1), BB3(1, 2), BB3(1, 3),
+                        BB3(2, 1), BB3(2, 2), BB3(2, 3),
+                        BB3(3, 1), BB3(3, 2), BB3(3, 3));
     mexPrintf("C3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                      C3.v0.x, C3.v1.x, C3.v2.x,
-                      C3.v0.y, C3.v1.y, C3.v2.y,
-                      C3.v0.z, C3.v1.z, C3.v2.z);
+                      C3(1, 1), C3(1, 2), C3(1, 3),
+                      C3(2, 1), C3(2, 2), C3(2, 3),
+                      C3(3, 1), C3(3, 2), C3(3, 3));
     mexPrintf("invC3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                         c3.v0.x, c3.v1.x, c3.v2.x,
-                         c3.v0.y, c3.v1.y, c3.v2.y,
-                         c3.v0.z, c3.v1.z, c3.v2.z);
+                         c3(1, 1), c3(1, 2), c3(1, 3),
+                         c3(2, 1), c3(2, 2), c3(2, 3),
+                         c3(3, 1), c3(3, 2), c3(3, 3));
     mexPrintf("C3_T = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                        CC3.v0.x, CC3.v1.x, CC3.v2.x,
-                        CC3.v0.y, CC3.v1.y, CC3.v2.y,
-                        CC3.v0.z, CC3.v1.z, CC3.v2.z);
+                        CC3(1, 1), CC3(1, 2), CC3(1, 3),
+                        CC3(2, 1), CC3(2, 2), CC3(2, 3),
+                        CC3(3, 1), CC3(3, 2), CC3(3, 3));
     mexPrintf("D3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                      D3.v0.x, D3.v1.x, D3.v2.x,
-                      D3.v0.y, D3.v1.y, D3.v2.y,
-                      D3.v0.z, D3.v1.z, D3.v2.z);
+                      D3(1, 1), D3(1, 2), D3(1, 3),
+                      D3(2, 1), D3(2, 2), D3(2, 3),
+                      D3(3, 1), D3(3, 2), D3(3, 3));
     mexPrintf("invD3 = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                         d3.v0.x, d3.v1.x, d3.v2.x,
-                         d3.v0.y, d3.v1.y, d3.v2.y,
-                         d3.v0.z, d3.v1.z, d3.v2.z);
+                         d3(1, 1), d3(1, 2), d3(1, 3),
+                         d3(2, 1), d3(2, 2), d3(2, 3),
+                         d3(3, 1), d3(3, 2), d3(3, 3));
     mexPrintf("D3_T = [ %lf, %lf, %lf ; %lf, %lf, %lf ; %lf, %lf, %lf ] \n",
-                        DD3.v0.x, DD3.v1.x, DD3.v2.x,
-                        DD3.v0.y, DD3.v1.y, DD3.v2.y,
-                        DD3.v0.z, DD3.v1.z, DD3.v2.z);
+                        DD3(1, 1), DD3(1, 2), DD3(1, 3),
+                        DD3(2, 1), DD3(2, 2), DD3(2, 3),
+                        DD3(3, 1), DD3(3, 2), DD3(3, 3));
 
-    Mat4 A(Vec4(rand()/(double)(RAND_MAX/10), -rand()/(double)(RAND_MAX/10),
+    Mat4 A4(Vec4(rand()/(double)(RAND_MAX/10), -rand()/(double)(RAND_MAX/10),
                 rand()/(double)(RAND_MAX/10), -rand()/(double)(RAND_MAX/10)),
            Vec4(rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10),
                 rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10)),
@@ -205,7 +131,7 @@ void test_matrix_multiplication()
                 rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10)),
            Vec4(-rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10),
                 rand()/(double)(RAND_MAX/10), -rand()/(double)(RAND_MAX/10)));
-    Mat4 B(Vec4(rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10),
+    Mat4 B4(Vec4(rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10),
                 -rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10)),
            Vec4(rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10),
                 rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10)),
@@ -214,78 +140,153 @@ void test_matrix_multiplication()
            Vec4(rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10),
                 -rand()/(double)(RAND_MAX/10), rand()/(double)(RAND_MAX/10)));
 
-    Mat4 C = A * B;
-    Mat4 D = B * A;
+    Mat4 C4 = A4 * B4;
+    Mat4 D4 = B4 * A4;
 
-    Mat4 AA = A.transpose();
-    Mat4 BB = B.transpose();
-    Mat4 CC = C.transpose();
-    Mat4 DD = D.transpose();
+    Mat4 AA4 = A4.transpose();
+    Mat4 BB4 = B4.transpose();
+    Mat4 CC4 = C4.transpose();
+    Mat4 DD4 = D4.transpose();
 
-    Mat4 a = A.inverse();
-    Mat4 b = B.inverse();
-    Mat4 c = C.inverse();
-    Mat4 d = D.inverse();
+    Mat4 a4 = A4.inverse();
+    Mat4 b4 = B4.inverse();
+    Mat4 c4 = C4.inverse();
+    Mat4 d4 = D4.inverse();
 
-    mexPrintf("A = [ %lf, %lf, %lf , %lf ; %lf, %lf, %lf , %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                      A.v0.x, A.v1.x, A.v2.x, A.v3.x,
-                      A.v0.y, A.v1.y, A.v2.y, A.v3.y,
-                      A.v0.z, A.v1.z, A.v2.z, A.v3.z,
-                      A.v0.w, A.v1.w, A.v2.w, A.v3.w);
-    mexPrintf("invA = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                        a.v0.x, a.v1.x, a.v2.x, a.v3.x,
-                        a.v0.y, a.v1.y, a.v2.y, a.v3.y,
-                        a.v0.z, a.v1.z, a.v2.z, a.v3.z,
-                        a.v0.w, a.v1.w, a.v2.w, a.v3.w);
-    mexPrintf("A_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                       AA.v0.x, AA.v1.x, AA.v2.x, AA.v3.x,
-                       AA.v0.y, AA.v1.y, AA.v2.y, AA.v3.y,
-                       AA.v0.z, AA.v1.z, AA.v2.z, AA.v3.z,
-                       AA.v0.w, AA.v1.w, AA.v2.w, AA.v3.w);
-    mexPrintf("B = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                     B.v0.x, B.v1.x, B.v2.x, B.v3.x,
-                     B.v0.y, B.v1.y, B.v2.y, B.v3.y,
-                     B.v0.z, B.v1.z, B.v2.z, B.v3.z,
-                     B.v0.w, B.v1.w, B.v2.w, B.v3.w);
-    mexPrintf("invB = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                        b.v0.x, b.v1.x, b.v2.x, b.v3.x,
-                        b.v0.y, b.v1.y, b.v2.y, b.v3.y,
-                        b.v0.z, b.v1.z, b.v2.z, b.v3.z,
-                        b.v0.w, b.v1.w, b.v2.w, b.v3.w);
-    mexPrintf("B_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                       BB.v0.x, BB.v1.x, BB.v2.x, BB.v3.x,
-                       BB.v0.y, BB.v1.y, BB.v2.y, BB.v3.y,
-                       BB.v0.z, BB.v1.z, BB.v2.z, BB.v3.z,
-                       BB.v0.w, BB.v1.w, BB.v2.w, BB.v3.w);
-    mexPrintf("C = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                     C.v0.x, C.v1.x, C.v2.x, C.v3.x,
-                     C.v0.y, C.v1.y, C.v2.y, C.v3.y,
-                     C.v0.z, C.v1.z, C.v2.z, C.v3.z,
-                     C.v0.w, C.v1.w, C.v2.w, C.v3.w);
-    mexPrintf("invC = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                        c.v0.x, c.v1.x, c.v2.x, c.v3.x,
-                        c.v0.y, c.v1.y, c.v2.y, c.v3.y,
-                        c.v0.z, c.v1.z, c.v2.z, c.v3.z,
-                        c.v0.w, c.v1.w, c.v2.w, c.v3.w);
-    mexPrintf("C_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                       CC.v0.x, CC.v1.x, CC.v2.x, CC.v3.x,
-                       CC.v0.y, CC.v1.y, CC.v2.y, CC.v3.y,
-                       CC.v0.z, CC.v1.z, CC.v2.z, CC.v3.z,
-                       CC.v0.w, CC.v1.w, CC.v2.w, CC.v3.w);
-    mexPrintf("D = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                     D.v0.x, D.v1.x, D.v2.x, D.v3.x,
-                     D.v0.y, D.v1.y, D.v2.y, D.v3.y,
-                     D.v0.z, D.v1.z, D.v2.z, D.v3.z,
-                     D.v0.w, D.v1.w, D.v2.w, D.v3.w);
-    mexPrintf("invD = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                        d.v0.x, d.v1.x, d.v2.x, d.v3.x,
-                        d.v0.y, d.v1.y, d.v2.y, d.v3.y,
-                        d.v0.z, d.v1.z, d.v2.z, d.v3.z,
-                        d.v0.w, d.v1.w, d.v2.w, d.v3.w);
-    mexPrintf("D_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
-                       DD.v0.x, DD.v1.x, DD.v2.x, DD.v3.x,
-                       DD.v0.y, DD.v1.y, DD.v2.y, DD.v3.y,
-                       DD.v0.z, DD.v1.z, DD.v2.z, DD.v3.z,
-                       DD.v0.w, DD.v1.w, DD.v2.w, DD.v3.w);
+    mexPrintf("A4 = [ %lf, %lf, %lf , %lf ; %lf, %lf, %lf , %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                      A4(1, 1), A4(1, 2), A4(1, 3), A4(1, 4),
+                      A4(2, 1), A4(2, 2), A4(2, 3), A4(2, 4),
+                      A4(3, 1), A4(3, 2), A4(3, 3), A4(3, 4),
+                      A4(4, 1), A4(4, 2), A4(4, 3), A4(4, 4));
+    mexPrintf("invA4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                        a4(1, 1), a4(1, 2), a4(1, 3), a4(1, 4),
+                        a4(2, 1), a4(2, 2), a4(2, 3), a4(2, 4),
+                        a4(3, 1), a4(3, 2), a4(3, 3), a4(3, 4),
+                        a4(4, 1), a4(4, 2), a4(4, 3), a4(4, 4));
+    mexPrintf("A4_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                       AA4(1, 1), AA4(1, 2), AA4(1, 3), AA4(1, 4),
+                       AA4(2, 1), AA4(2, 2), AA4(2, 3), AA4(2, 4),
+                       AA4(3, 1), AA4(3, 2), AA4(3, 3), AA4(3, 4),
+                       AA4(4, 1), AA4(4, 2), AA4(4, 3), AA4(4, 4));
+    mexPrintf("B4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                     B4(1, 1), B4(1, 2), B4(1, 3), B4(1, 4),
+                     B4(2, 1), B4(2, 2), B4(2, 3), B4(2, 4),
+                     B4(3, 1), B4(3, 2), B4(3, 3), B4(3, 4),
+                     B4(4, 1), B4(4, 2), B4(4, 3), B4(4, 4));
+    mexPrintf("invB4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                        b4(1, 1), b4(1, 2), b4(1, 3), b4(1, 4),
+                        b4(2, 1), b4(2, 2), b4(2, 3), b4(2, 4),
+                        b4(3, 1), b4(3, 2), b4(3, 3), b4(3, 4),
+                        b4(4, 1), b4(4, 2), b4(4, 3), b4(4, 4));
+    mexPrintf("B4_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                       BB4(1, 1), BB4(1, 2), BB4(1, 3), BB4(1, 4),
+                       BB4(2, 1), BB4(2, 2), BB4(2, 3), BB4(2, 4),
+                       BB4(3, 1), BB4(3, 2), BB4(3, 3), BB4(3, 4),
+                       BB4(4, 1), BB4(4, 2), BB4(4, 3), BB4(4, 4));
+    mexPrintf("C4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                     C4(1, 1), C4(1, 2), C4(1, 3), C4(1, 4),
+                     C4(2, 1), C4(2, 2), C4(2, 3), C4(2, 4),
+                     C4(3, 1), C4(3, 2), C4(3, 3), C4(3, 4),
+                     C4(4, 1), C4(4, 2), C4(4, 3), C4(4, 4));
+    mexPrintf("invC4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                        c4(1, 1), c4(1, 2), c4(1, 3), c4(1, 4),
+                        c4(2, 1), c4(2, 2), c4(2, 3), c4(2, 4),
+                        c4(3, 1), c4(3, 2), c4(3, 3), c4(3, 4),
+                        c4(4, 1), c4(4, 2), c4(4, 3), c4(4, 4));
+    mexPrintf("C4_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                       CC4(1, 1), CC4(1, 2), CC4(1, 3), CC4(1, 4),
+                       CC4(2, 1), CC4(2, 2), CC4(2, 3), CC4(2, 4),
+                       CC4(3, 1), CC4(3, 2), CC4(3, 3), CC4(3, 4),
+                       CC4(4, 1), CC4(4, 2), CC4(4, 3), CC4(4, 4));
+    mexPrintf("D4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                     D4(1, 1), D4(1, 2), D4(1, 3), D4(1, 4),
+                     D4(2, 1), D4(2, 2), D4(2, 3), D4(2, 4),
+                     D4(3, 1), D4(3, 2), D4(3, 3), D4(3, 4),
+                     D4(4, 1), D4(4, 2), D4(4, 3), D4(4, 4));
+    mexPrintf("invD4 = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                        d4(1, 1), d4(1, 2), d4(1, 3), d4(1, 4),
+                        d4(2, 1), d4(2, 2), d4(2, 3), d4(2, 4),
+                        d4(3, 1), d4(3, 2), d4(3, 3), d4(3, 4),
+                        d4(4, 1), d4(4, 2), d4(4, 3), d4(4, 4));
+    mexPrintf("D4_T = [ %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ; %lf, %lf, %lf, %lf ] \n",
+                       DD4(1, 1), DD4(1, 2), DD4(1, 3), DD4(1, 4),
+                       DD4(2, 1), DD4(2, 2), DD4(2, 3), DD4(2, 4),
+                       DD4(3, 1), DD4(3, 2), DD4(3, 3), DD4(3, 4),
+                       DD4(4, 1), DD4(4, 2), DD4(4, 3), DD4(4, 4));
+}
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if ( nrhs != 5 ||
+         !mxIsInt32(CONVERSION)  ||
+         !mxIsDouble(QUATERNION) ||
+         !mxIsDouble(EULER_ANGLE)||
+         !mxIsDouble(ROTA_ANGLE) ||
+         !mxIsDouble(ROTA_MATRIX) )
+    {
+        mexPrintf("input %d, %d, %d, %d, %d \n",
+            !mxIsInt32(CONVERSION),
+            !mxIsDouble(QUATERNION),
+            !mxIsDouble(EULER_ANGLE),
+            !mxIsDouble(ROTA_ANGLE),
+            !mxIsDouble(ROTA_MATRIX));
+        mexErrMsgTxt("Incorrect input/output argument format");
+    }
+
+    int conversion = mxGetScalar(CONVERSION);
+    Vec4* quat = (Vec4*)mxGetData(QUATERNION);
+    Vec3* euler = (Vec3*)mxGetData(EULER_ANGLE);
+    Vec4* rotAixs = (Vec4*)mxGetData(ROTA_ANGLE);
+    Mat3* matrix = (Mat3*)mxGetData(ROTA_MATRIX);
+    int num_quat = mxGetNumberOfElements(QUATERNION) / 4;
+
+    for (int i = 0; i < num_quat; ++i)
+    {
+        Quatern quater(quat[i]);
+        Quatern qt;
+
+        switch (conversion) {
+        case QUAT2MATRIX:
+            matrix[i] = quater.rotation_matrix();
+            break;
+
+        case QUAT2EULER:
+            euler[i] = quater.euler_angles();
+            break;
+
+        case QUAT2ROTA:
+            rotAixs[i] = quater.rotation_axis();
+            break;
+
+        case MATRIX2QUAT:
+            qt = Quatern::create_quaternion(matrix[i]);
+            quat[i].x = qt.v.x;
+            quat[i].y = qt.v.y;
+            quat[i].z = qt.v.z;
+            quat[i].w = qt.w;
+            break;
+
+        case EULER2QUAT:
+            qt = Quatern::create_quaternion(euler[i]);
+            quat[i].x = qt.v.x;
+            quat[i].y = qt.v.y;
+            quat[i].z = qt.v.z;
+            quat[i].w = qt.w;
+            break;
+
+        case ROTA2QUAT:
+            qt = Quatern::create_quaternion(Vec3(rotAixs[i].x, rotAixs[i].y, rotAixs[i].z), rotAixs[i].w);
+            quat[i].x = qt.v.x;
+            quat[i].y = qt.v.y;
+            quat[i].z = qt.v.z;
+            quat[i].w = qt.w;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+	//test_matrix_multiplication();
 }
 

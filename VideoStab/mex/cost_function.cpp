@@ -1,24 +1,24 @@
-// Digital Video Stabilization using Gyroscope & Accelerometer (6-DOF)
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-// Copyright (C) 2017 Zong Wei <zongwave@hotmail.com>
-//
+/*
+ * cost_function.cpp - Cost function for sensor parameters calibration
+ *
+ *  Copyright (c) 2017 Intel Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Zong Wei <wei.zong@intel.com>
+ */
 
 #include "mex.h"
-
-#include <time.h>
 
 #include "../cpp/quaternion.h"
 #include "../cpp/calc_projective2d.h"
@@ -27,15 +27,14 @@
 #define FRAME_ID       prhs[1]
 #define PT0            prhs[2]
 #define PT1            prhs[3]
-#define FRAME_TIME     prhs[4]
+#define FRAME_TS       prhs[4]
 #define FRAME_SIZE     prhs[5]
 #define ACC_TRANS      prhs[6]
 #define GYRO_QUAT      prhs[7]
-#define TIME_STAMP     prhs[8]
+#define GYRO_TS        prhs[8]
 #define PROJECTIVE2D   prhs[9]
 
 #define ERR           plhs[0]
-//#define OPTIMAL_CALIB plhs[1]
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -44,11 +43,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         !mxIsInt32(FRAME_ID) ||
         !mxIsDouble(PT0) ||
         !mxIsDouble(PT1) ||
-        !mxIsDouble(FRAME_TIME) ||
+        !mxIsDouble(FRAME_TS) ||
         !mxIsDouble(FRAME_SIZE) ||
         !mxIsDouble(ACC_TRANS) ||
         !mxIsDouble(GYRO_QUAT) ||
-        !mxIsDouble(TIME_STAMP) ||
+        !mxIsDouble(GYRO_TS) ||
         !mxIsDouble(PROJECTIVE2D))
     {
         mexPrintf("input number %d, output mumber %d \n", nrhs, nlhs);
@@ -57,28 +56,34 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mxIsInt32(FRAME_ID),
             mxIsDouble(PT0),
             mxIsDouble(PT1),
-            mxIsDouble(FRAME_TIME),
+            mxIsDouble(FRAME_TS),
             mxIsDouble(FRAME_SIZE),
             mxIsDouble(ACC_TRANS),
             mxIsDouble(GYRO_QUAT),
-            mxIsDouble(TIME_STAMP),
+            mxIsDouble(GYRO_TS),
             mxIsDouble(PROJECTIVE2D));
         mexErrMsgTxt("Incorrect input/output argument format. Usage: camera_calibration(frame_idx, p0, p1, frame_time, vid_dim, gyro_quat, gyro_time, cam_param)");
     }
 
     double* params = mxGetPr(INIT_CALIB);
     int* frame_idx = (int*)mxGetData(FRAME_ID);
+
     Vec2* p0 = (Vec2*)mxGetData(PT0);
     Vec2* p1 = (Vec2*)mxGetData(PT1);
-    double* frame_time = mxGetPr(FRAME_TIME);
+    size_t num_pts = mxGetNumberOfElements(PT0) / 2;
+
+    double* frame_timestamp = mxGetPr(FRAME_TS);
+    size_t frame_count = mxGetNumberOfElements(FRAME_TS);
+
     const double frame_width = mxGetPr(FRAME_SIZE)[0];
     const double frame_height = mxGetPr(FRAME_SIZE)[1];
+
     Vec3* acc_trans = (Vec3*)mxGetData(ACC_TRANS);
     Vec4* gyro_quat = (Vec4*)mxGetData(GYRO_QUAT);
-    double* time_stamp = mxGetPr(TIME_STAMP);
-    Mat3* projective = (Mat3*)mxGetPr(PROJECTIVE2D);
+    double* gyro_timestamp = mxGetPr(GYRO_TS);
+    size_t num_gyro_sampl = mxGetNumberOfElements(GYRO_TS);
 
-    size_t num_points = mxGetNumberOfElements(PT0);
+    Mat3* projective = (Mat3*)mxGetPr(PROJECTIVE2D);
 
     CalibrationParams calib;
     calib.fx = params[0];
@@ -93,6 +98,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     calib.gyro_delay = params[9];
     calib.readout_time = params[10];
 
+#if PRINT_MATRIX
     mexPrintf("calibration params: \n");
     mexPrintf("  camera focal length (%lf %lf) \n", calib.fx, calib.fy);
     mexPrintf("  camera skew parameter (%lf) \n", calib.skew);
@@ -100,25 +106,42 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mexPrintf("  gyro drift x(%lf), y(%lf), z(%lf), w(%lf) \n", calib.gyro_drift.x, calib.gyro_drift.y, calib.gyro_drift.z, calib.gyro_drift.w);
     mexPrintf("  gyro delay (%lf) \n", calib.gyro_delay);
     mexPrintf("  gyro readout time (%lf)\n", calib.readout_time);
+#endif
 
     ERR = mxCreateDoubleMatrix(1, 1, mxREAL);
     double &err = *mxGetPr(ERR);
 
-    size_t num_pts = mxGetNumberOfElements(PT0) / 2;
-    size_t num_gyro_samp = mxGetNumberOfElements(TIME_STAMP);
+    std::vector<double> frame_ts;
+    frame_ts.resize(frame_count);
+
+    for (int i = 0; i < frame_count; i++) {
+        frame_ts[i] = frame_timestamp[i];
+    }
+
+    std::vector<Vec4> quaternion;
+    std::vector<Vec3> translation;
+    std::vector<double> gyro_ts;
+    quaternion.resize(num_gyro_sampl);
+    translation.resize(num_gyro_sampl);
+    gyro_ts.resize(num_gyro_sampl);
+
+    for (int i = 0; i < num_gyro_sampl; i++) {
+        quaternion[i] = gyro_quat[i];
+        translation[i] = acc_trans[i];
+        gyro_ts[i] = gyro_timestamp[i];
+    }
 
     std::vector<Mat3> proj_mat;
-    proj_mat.resize(num_gyro_samp);
+    proj_mat.resize(num_gyro_sampl);
 
-    calc_projective2d(gyro_quat,
-                      acc_trans,
-                      num_gyro_samp,
-                      frame_time,
-                      time_stamp,
-                      calib,
-                      proj_mat);
+    calc_projective(frame_ts,
+                    quaternion,
+                    translation,
+                    gyro_ts,
+                    calib,
+                    proj_mat);
 
-    for (int i = 0; i < num_gyro_samp; i++) {
+    for (int i = 0; i < num_gyro_sampl; i++) {
         projective[i] = proj_mat[i];
     }
     proj_mat.clear();
@@ -127,16 +150,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     for (int pid = 0; pid < num_pts; ++pid) {
         int fid = frame_idx[pid];
 
-        if (fid >= num_gyro_samp) fid = num_gyro_samp - 1;
+        if (fid >= num_gyro_sampl) fid = num_gyro_sampl - 1;
 
         Vec3 p0_t = projective[fid-1] * Vec3(p0[pid].x, p0[pid].y, 1.0);
         Vec2 delta = p1[pid] - ( Vec2(p0_t.x, p0_t.y) / (p0_t.z) );
         err += delta.magnitude();
-        //mexPrintf("diff (%lf)x(%lf)=(%lf) \n", dxy.x, dxy.y, dxy.magnitude());
-#if PRINT_MATRIX
+#if 0
         {
-            //mexPrintf("line_length0 (%lf), ts0 (%lf) \n", line_length0, ts0);
-            //mexPrintf("line_length1 (%lf), ts1 (%lf) \n", line_length1, ts1);
             mexPrintf("extrinsic Matrix[%d] for Point[%d]: \n", fid, pid);
             mexPrintf("point0: x(%lf), y(%lf) \n", p0[pid].x, p0[pid].y);
             mexPrintf("point1: x(%lf), y(%lf) \n", p1[pid].x, p1[pid].y);
