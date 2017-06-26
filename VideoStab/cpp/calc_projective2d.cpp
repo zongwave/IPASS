@@ -290,7 +290,6 @@ Mat3 calc_projective (double* frame_ts,
 {
     double ts0 = frame_ts[0] + calib.gyro_delay;
     Quatern rot0 = Quatern(gyro_quat[0] + calib.gyro_drift);
-
     double ts1 = frame_ts[1] + calib.gyro_delay;
     Quatern rot1 = Quatern(gyro_quat[1] + calib.gyro_drift);
 
