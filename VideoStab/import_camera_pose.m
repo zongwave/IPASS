@@ -26,8 +26,8 @@ close all
 
 if (nargin < 1)
     [filename, pathname] = uigetfile( ...
-    {'*.data','DATA files (*.data)'; ...
-       '*.csv','CSV files (*.csv)'; ...
+    {  '*.csv','CSV files (*.csv)'; ...
+       '*.data','DATA files (*.data)'; ...
        '*.*',  'All Files (*.*)'}, ...
        'Pick Gyro & Acc 6-DOF file');
 end
@@ -35,23 +35,43 @@ end
 [pathstr, name, ext] = fileparts(filename)
 
 if  strcmp(ext, '.data')
-        fid = fopen(fullfile(pathname, filename));
+    fid = fopen(fullfile(pathname, filename));
+    csv_file = [pathname 'gyro_data.csv'];
 else
    fid = fopen('gyro.data');
 end;
 
 if  strcmp(ext, '.csv')
-    gyro_data = csvread(fullfile(pathname, filename));
+    format long
+    gyro_data = dlmread(fullfile(pathname, filename));
 
     figure();
-    plot(gyro_data(:, 2), 'r', 'LineWidth', 2);
+    subplot(2, 3, 1);
+    plot(gyro_data(:, 1), 'r', 'LineWidth', 2);
     hold on
-    plot(gyro_data(:, 3), 'g', 'LineWidth', 2);
+    plot(gyro_data(:, 2), 'g', 'LineWidth', 2);
     hold on
-    plot(gyro_data(:, 4), 'b', 'LineWidth', 2);
+    plot(gyro_data(:, 3), 'b', 'LineWidth', 2);
     hold on
-    title('Gyro Angular Speed');
+    plot(gyro_data(:, 4), 'k', 'LineWidth', 2);
+    hold on
+    title('Gyro Quaternion');
+    legend('X', 'Y', 'Z', 'W');
+
+    subplot(2, 3, 2);
+    plot(gyro_data(:, 5), 'r', 'LineWidth', 2);
+    hold on
+    plot(gyro_data(:, 6), 'g', 'LineWidth', 2);
+    hold on
+    plot(gyro_data(:, 7), 'b', 'LineWidth', 2);
+    hold on
+    title('Gyro Translation');
     legend('X', 'Y', 'Z');
+
+    sample_count = size(gyro_data);
+    quatern = gyro_data(:, 1:4);
+    translation = gyro_data(:, 5:7);
+    ts = gyro_data(:, 8);
 else
     frewind(fid);
     frame = textscan(fid, '%s %s %s %s %s', 'Delimiter',':');
@@ -61,8 +81,8 @@ else
     position = frame{4};
     orientation = frame{5};
 
-    ts_count = size(timestamp);
-    for i=1:ts_count(1)
+    sample_count = size(timestamp);
+    for i=1:sample_count(1)
         ts(i) = textscan(timestamp{i}, '%f');
     end
     ts = cell2mat(ts)';
@@ -75,38 +95,31 @@ else
     display(['max frame gap: ' num2str(max(frame_gap))]);
     display(['num frames dropped: ' num2str(sum(round(frame_gap)))]);
 
-    for i=1:ts_count(1)
+    for i=1:sample_count(1)
         translation{i} = textscan(position{i}, '%f %f %f', 'Delimiter', ',');
     end
     
-if 0
-    trans_x(1) = 0;
-    trans_y(1) = 0;
-    trans_z(1) = 0;
-    for i=2:ts_count(1)
-        trans_x(i) = (translation{i}{1} - translation{i-1}{1});
-        trans_y(i) = (translation{i}{2} - translation{i-1}{2});
-        trans_z(i) = (translation{i}{3} - translation{i-1}{3});
-    end
-else
-    for i=1:ts_count(1)
+    for i=1:sample_count(1)
         trans_x(i) = (translation{i}{1});
         trans_y(i) = (translation{i}{2});
         trans_z(i) = (translation{i}{3});
     end
-end
     translation = [trans_x; trans_y; trans_z]';
 
-    for i=1:ts_count(1)
+    for i=1:sample_count(1)
         orientation{i} = textscan(orientation{i}, '%f %f %f %f', 'Delimiter', ',');
     end
-    for i=1:ts_count(1)
+    for i=1:sample_count(1)
         orient_x(i) = (orientation{i}{1});
         orient_y(i) = (orientation{i}{2});
         orient_z(i) = (orientation{i}{3});
         orient_w(i) = (orientation{i}{4});
     end
     quatern = [orient_x; orient_y; orient_z; orient_w]';
+
+    if  strcmp(ext, '.data')
+        dlmwrite(csv_file, [quatern translation ts], 'precision', '%12.6f');
+    end
 
     figure();
     subplot(2, 3, 1);
@@ -117,7 +130,7 @@ end
     plot(trans_z, 'b', 'LineWidth', 2);
     hold on
     title('Gyro Translation');
-    legend('Translation X', 'Translation Y', 'Translation Z');
+    legend('X', 'Y', 'Z');
 
     subplot(2, 3, 2);
     plot(orient_x, 'r', 'LineWidth', 2);
@@ -129,18 +142,18 @@ end
     plot(orient_w, 'k', 'LineWidth', 2);
     hold on
     title('Gyro Orientation');
-    legend('Orientation X', 'Orientation Y', 'Orientation Z', 'Orientation W');
+    legend('X', 'Y', 'Z', 'W');
 end
-eulerAngle = zeros(3, ts_count(1));
-rotAxis = zeros(4, ts_count(1));
-rotMatrix = zeros(3, 3, ts_count(1));
+eulerAngle = zeros(3, sample_count(1));
+rotAxis = zeros(4, sample_count(1));
+rotMatrix = zeros(3, 3, sample_count(1));
 
 
 % %% Quaternion to Matrix
 convertType = int32(0);
 
 convert_rotation(convertType, quatern', eulerAngle, rotAxis, rotMatrix);
-points = ones(ts_count(1), 3);
+points = ones(sample_count(1), 3);
 for i=1:size(rotMatrix, 3)
     points(i, :) = rotMatrix(:, :, i) * points(i, :)';
 end
